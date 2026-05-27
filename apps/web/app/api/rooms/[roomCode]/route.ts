@@ -41,10 +41,13 @@ export async function POST(
     const { roomCode } = await params;
     const supabase = getAdminSupabase();
 
+    // Accept either a room_code or a genlayer_game_id (e.g. "wc_xxx"). The game
+    // page only has the genlayer id, so we resolve it here.
+    const isGameId = roomCode.startsWith('wc_');
     const { data: room, error: roomErr } = await supabase
       .from('rooms')
       .select('*, room_players(wallet_address, seat_index)')
-      .eq('room_code', roomCode)
+      .eq(isGameId ? 'genlayer_game_id' : 'room_code', roomCode)
       .maybeSingle();
     if (roomErr) return NextResponse.json({ error: roomErr.message }, { status: 500 });
     if (!room) return NextResponse.json({ error: 'not_found' }, { status: 404 });

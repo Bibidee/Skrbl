@@ -134,6 +134,20 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
       // Placeholder commitment — replaced by /api/tiles/deal once the bag is dealt.
       const rackCommitment = `pending_${gameId}_${walletAddress.slice(2, 10)}`;
       await joinGame(walletClient, { gameId, rackCommitment });
+
+      // Mirror the join into Supabase so /api/tiles/deal sees both seats.
+      // The route accepts either a room_code or a genlayer_game_id.
+      setStatus('Syncing seat with Supabase...');
+      const joinRes = await fetch(`/api/rooms/${gameId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!joinRes.ok) {
+        const detail = (await joinRes.json().catch(() => ({}))) as { error?: string };
+        // Joined on-chain even if mirror failed; surface but don't block.
+        clientLogger.warn('supabase join mirror failed', { error: detail.error });
+      }
+
       setStatus('Joined! Waiting for the creator to start the game...');
       await refresh();
     } catch (e) {
