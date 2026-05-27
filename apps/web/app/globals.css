@@ -1,0 +1,67 @@
+@import 'tailwindcss';
+
+/*
+ * WordCourt theme tokens (PDF section 13). Kept in sync with the canonical values
+ * in packages/shared/src/colors.ts. Update both files together.
+ */
+@theme {
+  --color-background: #F8F7FF;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F3F0FF;
+
+  --color-primary: #6D28D9;
+  --color-primary-dark: #4C1D95;
+
+  --color-accent-gold: #F59E0B;
+  --color-accent-green: #22C55E;
+
+  --color-text-dark: #1F1F1F;
+  --color-text-muted: #6B7280;
+  --color-border: #E5E7EB;
+
+  --color-danger: #EF4444;
+  --color-success: #16A34A;
+
+  /* Board */
+  --color-board-base: #F5E7C8;
+  --color-board-border: #7C5C2E;
+  --color-square-normal: #F8E8C8;
+  --color-square-dl: #93C5FD;
+  --color-square-tl: #2563EB;
+  --color-square-dw: #FCA5A5;
+  --color-square-tw: #DC2626;
+  --color-square-centre: #F59E0B;
+
+  /* Tile */
+  --color-tile-bg: #FDECC8;
+  --color-tile-border: #C0842D;
+  --color-tile-text: #1F1F1F;
+  --color-tile-score: #6B4E16;
+  --color-tile-blank: #FFF7E6;
+
+  /* Player chips */
+  --color-player-1: #6D28D9;
+  --color-player-2: #2563EB;
+  --color-player-3: #16A34A;
+  --color-player-4: #F59E0B;
+
+  --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Inter', var(--font-sans);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}

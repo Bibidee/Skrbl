@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+.turbo/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# GenLayer / Python tooling
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+contracts/genlayer/deploy/deployed_address.json
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+.nyc_output/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/
+
+# Misc
+*.tsbuildinfo
+.eslintcache

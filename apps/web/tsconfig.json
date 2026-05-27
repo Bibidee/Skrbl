@@ -1,0 +1,29 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "preserve",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "noEmit": true,
+    "incremental": true,
+    "allowJs": true,
+    // Override base: apps don't emit declarations, and leaving declaration:true on
+    // surfaces TS4023 "non-portable inferred type" diagnostics for re-exported
+    // third-party types (e.g. RainbowKit's getDefaultConfig return).
+    "declaration": false,
+    "declarationMap": false,
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./*"],
+      "@wordcourt/shared": ["../../packages/shared/src/index.ts"],
+      "@wordcourt/shared/*": ["../../packages/shared/src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", ".next", "dist", ".turbo"]
+}

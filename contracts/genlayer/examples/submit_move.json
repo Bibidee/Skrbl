@@ -1,0 +1,15 @@
+{
+  "_comment": "Sample placements_json payload for submit_move. The contract expects a JSON-STRING (not an object); the frontend will JSON.stringify the placements array before passing to the call.",
+  "first_move_HELLO_horizontal_centre": [
+    { "row": 7, "col": 7,  "letter": "H", "blank": false },
+    { "row": 7, "col": 8,  "letter": "E", "blank": false },
+    { "row": 7, "col": 9,  "letter": "L", "blank": false },
+    { "row": 7, "col": 10, "letter": "L", "blank": false },
+    { "row": 7, "col": 11, "letter": "O", "blank": false }
+  ],
+  "second_move_blank_J_for_S_extending_to_SAW": [
+    { "row": 8, "col": 7,  "letter": "S", "blank": true },
+    { "row": 9, "col": 7,  "letter": "A", "blank": false },
+    { "row": 10, "col": 7, "letter": "W", "blank": false }
+  ]
+}
