@@ -1,7 +1,7 @@
 {
   "framework": "nextjs",
-  "installCommand": "pnpm install --frozen-lockfile",
-  "buildCommand": "pnpm --filter web build",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build --workspace=@wordcourt/web",
   "outputDirectory": "apps/web/.next",
-  "devCommand": "pnpm --filter web dev"
+  "devCommand": "npm run dev --workspace=@wordcourt/web"
 }

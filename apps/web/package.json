@@ -16,7 +16,7 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.46.1",
     "@tanstack/react-query": "^5.66.0",
-    "@wordcourt/shared": "workspace:*",
+    "@wordcourt/shared": "*",
     "jose": "^5.9.6",
     "siwe": "^3.0.0",
     "clsx": "^2.1.1",
