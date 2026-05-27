@@ -70,8 +70,25 @@ async function writeCall(
   const address = getContractAddress();
   const hash = await client.writeContract({ address, functionName, args });
   const receipt = await client.waitForTransactionReceipt({ hash });
-  if (receipt.status !== 'success') {
-    throw new Error(`GENLAYER_TX_FAILED: ${functionName} status=${receipt.status}`);
+
+  // GenLayer transaction status can surface in two forms:
+  //  1. viem-style string: 'success' | 'reverted'
+  //  2. GenLayer numeric enum: PENDING=0, CANCELED=1, PROPOSING=2, COMMITTING=3,
+  //     REVEALING=4, ACCEPTED=5, FINALIZED=6, UNDETERMINED=7,
+  //     LEADER_TIMEOUT=8, VALIDATORS_TIMEOUT=9
+  // ACCEPTED (5) and FINALIZED (6) are both successful outcomes. The contract
+  // can also expose `consensus_data` / `accepted` flags as a secondary signal.
+  const rawStatus = (receipt as Record<string, unknown>).status as unknown;
+  const isSuccess =
+    rawStatus === 'success' ||
+    rawStatus === 5 ||
+    rawStatus === 6 ||
+    rawStatus === 'ACCEPTED' ||
+    rawStatus === 'FINALIZED' ||
+    (receipt as Record<string, unknown>).accepted === true;
+
+  if (!isSuccess) {
+    throw new Error(`GENLAYER_TX_FAILED: ${functionName} status=${String(rawStatus)}`);
   }
   // The contract returns a JSON-stringified receipt in receipt.data (genlayer-js
   // surfaces it under varying property names by version). Fall back to {}.
