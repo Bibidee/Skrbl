@@ -1,19 +1,19 @@
 /**
- * GenLayer StudioNet chain definition reused by the read client and any future
- * direct viem interactions. Pulled from env so the chain id / RPC stays in
- * one place.
+ * GenLayer StudioNet chain definition for genlayer-js. Start from the SDK's
+ * official 1.1.7 chain so write calls keep the consensus contract metadata.
  */
-import { defineChain } from 'viem';
+import { studionet } from 'genlayer-js/chains';
 import { clientEnv } from '../env/client';
 import { getBrowserGenLayerRpcUrl } from './rpc-url';
 
 const rpcUrl = getBrowserGenLayerRpcUrl();
 
-export const studioNet = defineChain({
+export const studioNet = {
+  ...studionet,
   id: clientEnv.NEXT_PUBLIC_CHAIN_ID,
   name: 'GenLayer StudioNet',
-  nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
   rpcUrls: {
+    ...studionet.rpcUrls,
     default: { http: [rpcUrl] },
   },
   blockExplorers: {
@@ -22,5 +22,4 @@ export const studioNet = defineChain({
       url: clientEnv.NEXT_PUBLIC_GENLAYER_EXPLORER_URL,
     },
   },
-  testnet: true,
-});
+} satisfies typeof studionet;

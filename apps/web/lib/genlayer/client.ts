@@ -63,13 +63,16 @@ export async function getReadClient(): Promise<GenLayerReadClient> {
 }
 
 export async function getWriteClient(walletClient: WalletClient): Promise<GenLayerWriteClient> {
+  if (!walletClient.account?.address) {
+    throw new Error('GENLAYER_WALLET_ACCOUNT_MISSING');
+  }
   const { createClient } = await import('genlayer-js');
   const { studioNet } = await import('./chain');
   const client = createClient({
     chain: studioNet,
     endpoint: getBrowserGenLayerRpcUrl(),
-    account: walletClient.account,
-    transport: walletClient.transport,
+    account: walletClient.account.address,
+    provider: walletClient.transport,
   } as unknown as Parameters<typeof createClient>[0]) as unknown as GenLayerWriteClient;
   return client;
 }

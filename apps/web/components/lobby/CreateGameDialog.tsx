@@ -69,6 +69,11 @@ export function CreateGameDialog() {
       return;
     }
 
+    if (!walletClient.account?.address) {
+      setError('Wallet account is still loading. Try again in a moment.');
+      return;
+    }
+
     const gameId = `wc_${randomRoomCode().toLowerCase()}${Math.floor(Math.random() * 1000)}`;
     const roomCode = randomRoomCode();
     const wallet = walletClient.account.address.toLowerCase();
