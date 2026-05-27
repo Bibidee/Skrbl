@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount, useWalletClient } from 'wagmi';
@@ -12,6 +13,7 @@ import {
 import {
   challengeMove,
   getGame,
+  joinGame,
   passTurn,
   recordExchange,
   resignGame,
@@ -123,6 +125,25 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   }
 
   // --- Setup phase: creator deals + commits + starts. ---
+  const handleJoin = useCallback(async () => {
+    if (!walletClient || !walletAddress || !game) return;
+    setError(null);
+    setBusy(true);
+    setStatus('Joining game on GenLayer...');
+    try {
+      // Placeholder commitment — replaced by /api/tiles/deal once the bag is dealt.
+      const rackCommitment = `pending_${gameId}_${walletAddress.slice(2, 10)}`;
+      await joinGame(walletClient, { gameId, rackCommitment });
+      setStatus('Joined! Waiting for the creator to start the game...');
+      await refresh();
+    } catch (e) {
+      clientLogger.error('join game failed', { msg: (e as Error).message });
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }, [walletClient, walletAddress, game, gameId, refresh]);
+
   async function handleDealAndStart() {
     if (!walletClient || !game) return;
     if (!walletAddress) {
@@ -444,7 +465,9 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
             busy={busy}
             status={status}
             error={error}
+            gameId={gameId}
             onDealAndStart={handleDealAndStart}
+            onJoin={handleJoin}
             onSignIn={signIn}
           />
         )}
@@ -599,12 +622,27 @@ function SetupPanel(props: {
   busy: boolean;
   status: string | null;
   error: string | null;
+  gameId: string;
   onDealAndStart: () => void;
+  onJoin: () => void;
   onSignIn: () => Promise<boolean>;
 }) {
   const isCreator =
     props.walletAddress && props.walletAddress === props.game.creator.toLowerCase();
+  const isAlreadyJoined =
+    !!props.walletAddress &&
+    props.game.players.map((p) => p.toLowerCase()).includes(props.walletAddress);
+  const isFull = props.game.players.length >= props.game.max_players;
   const canStart = props.game.players.length >= 2;
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = async () => {
+    try {
+      const url = `${window.location.origin}/game/${props.gameId}`;
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
   return (
     <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
       <h2 className="text-lg font-bold text-text-dark flex items-center gap-2">
@@ -635,11 +673,24 @@ function SetupPanel(props: {
           <Button onClick={props.onSignIn}>Sign in with wallet</Button>
         )}
         {isCreator && (
-          <Button onClick={props.onDealAndStart} disabled={props.busy || !canStart}>
-            {canStart ? 'Deal tiles & start' : 'Waiting for one more player'}
+          <>
+            <Button onClick={props.onDealAndStart} disabled={props.busy || !canStart}>
+              {canStart ? 'Deal tiles & start' : 'Waiting for one more player'}
+            </Button>
+            <Button variant="ghost" onClick={handleCopy}>
+              {copied ? 'Copied!' : 'Copy invite link'}
+            </Button>
+          </>
+        )}
+        {!isCreator && props.walletAddress && !isAlreadyJoined && !isFull && (
+          <Button onClick={props.onJoin} disabled={props.busy}>
+            Join game
           </Button>
         )}
-        {!isCreator && props.walletAddress && (
+        {!isCreator && props.walletAddress && !isAlreadyJoined && isFull && (
+          <p className="text-sm text-text-muted">Game is full.</p>
+        )}
+        {!isCreator && props.walletAddress && isAlreadyJoined && (
           <p className="text-sm text-text-muted">Waiting for creator to start the game.</p>
         )}
       </div>
