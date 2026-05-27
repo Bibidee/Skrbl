@@ -5,13 +5,16 @@
  */
 import { defineChain } from 'viem';
 import { clientEnv } from '../env/client';
+import { getBrowserGenLayerRpcUrl } from './rpc-url';
+
+const rpcUrl = getBrowserGenLayerRpcUrl();
 
 export const studioNet = defineChain({
   id: clientEnv.NEXT_PUBLIC_CHAIN_ID,
   name: 'GenLayer StudioNet',
   nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
   rpcUrls: {
-    default: { http: [clientEnv.NEXT_PUBLIC_GENLAYER_RPC_URL] },
+    default: { http: [rpcUrl] },
   },
   blockExplorers: {
     default: {

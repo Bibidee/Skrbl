@@ -8,15 +8,17 @@
 import { createConfig, http } from 'wagmi';
 import { injected } from 'wagmi/connectors';
 import { defineChain } from 'viem';
-import { mainnet, sepolia } from 'wagmi/chains';
 import { clientEnv } from './env/client';
+import { getBrowserGenLayerRpcUrl } from './genlayer/rpc-url';
+
+const genLayerRpcUrl = getBrowserGenLayerRpcUrl();
 
 export const studioNet = defineChain({
   id: clientEnv.NEXT_PUBLIC_CHAIN_ID,
   name: 'GenLayer StudioNet',
   nativeCurrency: { name: 'GEN', symbol: 'GEN', decimals: 18 },
   rpcUrls: {
-    default: { http: [clientEnv.NEXT_PUBLIC_GENLAYER_RPC_URL] },
+    default: { http: [genLayerRpcUrl] },
   },
   blockExplorers: {
     default: {
@@ -28,12 +30,10 @@ export const studioNet = defineChain({
 });
 
 export const wagmiConfig = createConfig({
-  chains: [studioNet, mainnet, sepolia],
+  chains: [studioNet],
   connectors: [injected()],
   transports: {
-    [studioNet.id]: http(clientEnv.NEXT_PUBLIC_GENLAYER_RPC_URL),
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
+    [studioNet.id]: http(genLayerRpcUrl),
   },
   ssr: true,
 });

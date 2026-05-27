@@ -16,6 +16,7 @@
  */
 import { assertConfigured, clientEnv } from '../env/client';
 import type { WalletClient } from 'viem';
+import { getBrowserGenLayerRpcUrl } from './rpc-url';
 
 // genlayer-js types vary across versions; we keep the surface area narrow.
 type GenLayerReadClient = {
@@ -56,7 +57,7 @@ export async function getReadClient(): Promise<GenLayerReadClient> {
   const { studioNet } = await import('./chain');
   cachedRead = createClient({
     chain: studioNet,
-    endpoint: clientEnv.NEXT_PUBLIC_GENLAYER_RPC_URL,
+    endpoint: getBrowserGenLayerRpcUrl(),
   } as unknown as Parameters<typeof createClient>[0]) as unknown as GenLayerReadClient;
   return cachedRead;
 }
@@ -66,7 +67,7 @@ export async function getWriteClient(walletClient: WalletClient): Promise<GenLay
   const { studioNet } = await import('./chain');
   const client = createClient({
     chain: studioNet,
-    endpoint: clientEnv.NEXT_PUBLIC_GENLAYER_RPC_URL,
+    endpoint: getBrowserGenLayerRpcUrl(),
     account: walletClient.account,
     transport: walletClient.transport,
   } as unknown as Parameters<typeof createClient>[0]) as unknown as GenLayerWriteClient;

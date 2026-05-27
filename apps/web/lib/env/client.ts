@@ -22,6 +22,21 @@ const optionalUrl = z
   .optional()
   .or(z.literal('').transform(() => undefined));
 
+const optionalUrlOrPath = z
+  .string()
+  .trim()
+  .refine((value) => {
+    if (value.startsWith('/')) return true;
+    try {
+      const url = new URL(value);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  }, 'Must be an absolute http(s) URL or a same-origin path beginning with /')
+  .optional()
+  .or(z.literal('').transform(() => undefined));
+
 const optionalString = z
   .string()
   .optional()
@@ -31,7 +46,8 @@ const ClientEnvSchema = z.object({
   NEXT_PUBLIC_APP_NAME: z.string().default('WordCourt'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 
-  NEXT_PUBLIC_GENLAYER_RPC_URL: z.string().url().default('https://studio.genlayer.com/api'),
+  // Browser code must use the same-origin proxy to avoid upstream RPC CORS.
+  NEXT_PUBLIC_GENLAYER_RPC_PROXY_URL: optionalUrlOrPath.default('/api/genlayer/rpc'),
   NEXT_PUBLIC_CHAIN_ID: z.coerce.number().int().positive().default(61999),
   NEXT_PUBLIC_GENLAYER_EXPLORER_URL: z
     .string()
@@ -52,7 +68,7 @@ function parse(): ClientEnv {
   const parsed = ClientEnvSchema.safeParse({
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_GENLAYER_RPC_URL: process.env.NEXT_PUBLIC_GENLAYER_RPC_URL,
+    NEXT_PUBLIC_GENLAYER_RPC_PROXY_URL: process.env.NEXT_PUBLIC_GENLAYER_RPC_PROXY_URL,
     NEXT_PUBLIC_CHAIN_ID: process.env.NEXT_PUBLIC_CHAIN_ID,
     NEXT_PUBLIC_GENLAYER_EXPLORER_URL: process.env.NEXT_PUBLIC_GENLAYER_EXPLORER_URL,
     NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS: process.env.NEXT_PUBLIC_GENLAYER_CONTRACT_ADDRESS,

@@ -41,6 +41,8 @@ const ServerEnvSchema = z.object({
   // GenLayer server operator (used for read-only sync; never used to sign player moves).
   // Filled when the contract goes live and a sync worker is provisioned.
   GENLAYER_OPERATOR_PRIVATE_KEY: optionalString,
+  // Server-side upstream RPC endpoint. Browser clients call /api/genlayer/rpc.
+  GENLAYER_RPC_URL: optionalUrl,
 
   // Optional Upstash rate-limit credentials (fallback to in-memory when unset)
   UPSTASH_REDIS_REST_URL: optionalUrl,
