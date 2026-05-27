@@ -57,7 +57,7 @@ export function GenLayerProofPanel({ game }: Props) {
             <span className="text-text-muted shrink-0">Last move</span>
             <span className="text-right">
               <span className="block text-text-dark">
-                #{lastMove.moveNumber} · {lastMove.moveType.replace('_', ' ')}
+                #{lastMove.moveNumber ?? '-'} · {(lastMove.moveType ?? 'move').replace('_', ' ')}
               </span>
               {lastMove.formedWords && lastMove.formedWords.length > 0 && (
                 <span className="block text-accent-gold font-semibold">

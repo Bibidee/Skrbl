@@ -229,6 +229,28 @@ export async function getTotalGames(): Promise<number> {
   return typeof raw === 'bigint' ? Number(raw) : Number(raw);
 }
 
+/**
+ * Maps a single move record's snake_case keys (what the GenLayer contract
+ * emits) to the camelCase shape the UI types expect. Defensive — leaves
+ * camelCase keys alone if both are present, so it's safe to run twice.
+ */
+function normaliseMove(m: Record<string, unknown> | null | undefined): Record<string, unknown> | null {
+  if (!m || typeof m !== 'object') return null;
+  return {
+    moveNumber: m.moveNumber ?? m.move_number ?? 0,
+    playerWallet: m.playerWallet ?? m.player_wallet ?? '',
+    moveType: m.moveType ?? m.move_type ?? 'play_word',
+    placements: m.placements ?? [],
+    formedWords: m.formedWords ?? m.formed_words ?? [],
+    officialScore: m.officialScore ?? m.official_score,
+    reasoning: m.reasoning,
+    txHash: m.txHash ?? m.tx_hash,
+    status: m.status,
+    rack_commitment_after: m.rack_commitment_after,
+    word_details: m.word_details,
+  };
+}
+
 export async function getGame(gameId: string): Promise<OnChainGame | null> {
   const client = await getReadClient();
   const raw = await client.readContract({
@@ -237,7 +259,20 @@ export async function getGame(gameId: string): Promise<OnChainGame | null> {
     args: [gameId],
   });
   if (typeof raw !== 'string' || raw === '') return null;
-  return JSON.parse(raw) as OnChainGame;
+  const game = JSON.parse(raw) as OnChainGame & Record<string, unknown>;
+
+  // Contract emits snake_case for move records; UI types are camelCase.
+  // Normalise at the boundary so consumers don't crash on undefined fields.
+  if (game.last_move) {
+    game.last_move = normaliseMove(game.last_move as Record<string, unknown>) as OnChainGame['last_move'];
+  }
+  if (Array.isArray(game.move_history)) {
+    game.move_history = game.move_history.map(
+      (m) => normaliseMove(m as Record<string, unknown>),
+    ) as OnChainGame['move_history'];
+  }
+
+  return game;
 }
 
 export async function getStatus(gameId: string): Promise<string> {
