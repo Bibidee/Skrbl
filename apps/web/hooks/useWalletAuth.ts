@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
 import { SiweMessage } from 'siwe';
+import { getAddress } from 'viem';
 import { clientLogger } from '@/lib/logger/client';
 
 type State = {
@@ -44,7 +45,7 @@ export function useWalletAuth() {
     try {
       const domain = window.location.host;
       const origin = window.location.origin;
-      const wallet = address.toLowerCase() as `0x${string}`;
+      const wallet = getAddress(address);
 
       const nonceRes = await fetch('/api/auth/nonce', {
         method: 'POST',
