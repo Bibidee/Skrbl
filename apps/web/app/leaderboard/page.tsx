@@ -5,11 +5,13 @@ import { Trophy } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { getLeaderboard, type PlayerStats } from '@/lib/genlayer';
+import { useDisplayNames } from '@/hooks/useDisplayNames';
 
 export default function LeaderboardPage() {
   const [rows, setRows] = useState<PlayerStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { label, short } = useDisplayNames(rows.map((r) => r.player));
 
   useEffect(() => {
     let cancelled = false;
@@ -45,7 +47,7 @@ export default function LeaderboardPage() {
             <thead>
               <tr className="border-b border-border bg-surface-soft text-left text-xs uppercase tracking-wide text-text-muted">
                 <th className="px-4 py-3">#</th>
-                <th className="px-4 py-3">Wallet</th>
+                <th className="px-4 py-3">Player</th>
                 <th className="px-4 py-3 text-right">Rank pts</th>
                 <th className="px-4 py-3 text-right">Wins</th>
                 <th className="px-4 py-3 text-right">Losses</th>
@@ -78,8 +80,9 @@ export default function LeaderboardPage() {
               {rows.map((r, i) => (
                 <tr key={r.player} className="border-b border-border/40">
                   <td className="px-4 py-3 font-mono text-text-muted">{i + 1}</td>
-                  <td className="px-4 py-3 font-mono text-xs text-text-dark">
-                    {r.player.slice(0, 8)}…{r.player.slice(-6)}
+                  <td className="px-4 py-3 text-xs text-text-dark">
+                    <span className="font-semibold">{label(r.player)}</span>
+                    <span className="ml-2 font-mono text-[10px] text-text-muted">{short(r.player)}</span>
                   </td>
                   <td className="px-4 py-3 text-right font-semibold text-primary tabular-nums">
                     {r.rank_points}

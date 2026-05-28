@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ConnectButton } from '@/components/wallet/ConnectButton';
+import { AccountMenu } from '@/components/wallet/AccountMenu';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 const NAV = [
@@ -41,7 +41,7 @@ export function Header() {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <ConnectButton />
+          <AccountMenu />
         </div>
       </div>
     </header>

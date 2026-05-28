@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccount, useWalletClient } from 'wagmi';
+import { useWallet } from '@/components/providers/EmbeddedWalletProvider';
 import { AlertTriangle, ArrowLeftRight, Flag, Gavel, Hammer, Send, SkipForward, Trophy } from 'lucide-react';
 import {
   cellKey,
@@ -35,16 +35,13 @@ import { ChatPanel } from '@/components/scrabble/ChatPanel';
 import { WinnerModal } from '@/components/scrabble/WinnerModal';
 import { ExchangeTilesModal } from '@/components/scrabble/ExchangeTilesModal';
 import { placementsArray, usePlacementStore } from '@/store/usePlacementStore';
-import { useWalletAuth } from '@/hooks/useWalletAuth';
 import { useRealtime } from '@/hooks/useRealtime';
 import { clientLogger } from '@/lib/logger/client';
 
 export default function GamePage({ params }: { params: Promise<{ gameId: string }> }) {
   const { gameId } = use(params);
   const router = useRouter();
-  const { isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
-  const { walletAddress, signIn } = useWalletAuth();
+  const { walletAddress, isUnlocked, getAccount } = useWallet();
   const placements = usePlacementStore((s) => s.temporary);
   const selectedTileId = usePlacementStore((s) => s.selectedTileId);
   const selectTile = usePlacementStore((s) => s.selectTile);
@@ -125,14 +122,16 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
 
   // --- Setup phase: creator deals + commits + starts. ---
   const handleJoin = useCallback(async () => {
-    if (!walletClient || !walletAddress || !game) return;
+    const account = getAccount();
+    if (!walletAddress || !game) return;
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     setError(null);
     setBusy(true);
     setStatus('Joining game on GenLayer...');
     try {
       // Placeholder commitment — replaced by /api/tiles/deal once the bag is dealt.
       const rackCommitment = `pending_${gameId}_${walletAddress.slice(2, 10)}`;
-      await joinGame(walletClient, { gameId, rackCommitment });
+      await joinGame(account, { gameId, rackCommitment });
 
       // Mirror the join into Supabase so /api/tiles/deal sees both seats.
       // The route accepts either a room_code or a genlayer_game_id.
@@ -155,14 +154,12 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
     } finally {
       setBusy(false);
     }
-  }, [walletClient, walletAddress, game, gameId, refresh]);
+  }, [getAccount, walletAddress, game, gameId, refresh]);
 
   async function handleDealAndStart() {
-    if (!walletClient || !game) return;
-    if (!walletAddress) {
-      const ok = await signIn();
-      if (!ok) return;
-    }
+    const account = getAccount();
+    if (!game) return;
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     setBusy(true);
     setError(null);
     try {
@@ -189,15 +186,15 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
       };
 
       setStatus('Submitting commit_tile_bag to GenLayer...');
-      await commitTileBag(walletClient, { gameId, bagCommitment: deal.bagCommitment });
+      await commitTileBag(account, { gameId, bagCommitment: deal.bagCommitment });
 
       setStatus('Submitting commit_rack for each player...');
       for (const rc of deal.rackCommitments) {
-        await commitRack(walletClient, { gameId, rackCommitment: rc.rackCommitment });
+        await commitRack(account, { gameId, rackCommitment: rc.rackCommitment });
       }
 
       setStatus('Submitting start_game...');
-      await startGame(walletClient, { gameId });
+      await startGame(account, { gameId });
       setStatus(null);
       await refresh();
     } catch (e) {
@@ -209,7 +206,9 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   }
 
   async function handleSubmitMove() {
-    if (!walletClient || !game) return;
+    const account = getAccount();
+    if (!game) return;
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     const arr = placementsArray(placements);
     if (arr.length === 0) {
       setError('Place at least one tile.');
@@ -246,7 +245,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
 
       // Step 3: submit the move to GenLayer with the real next rack commitment
       setStatus('Submitting move to GenLayer (validating words + score)...');
-      const result = await submitMove(walletClient, {
+      const result = await submitMove(account, {
         gameId,
         placements: arr,
         claimedWords: preview.formed_words,
@@ -281,7 +280,8 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   }
 
   async function handlePass() {
-    if (!walletClient) return;
+    const account = getAccount();
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     if (!rackCommitment) {
       setError('Rack commitment not loaded. Please wait for the page to fully load.');
       return;
@@ -290,7 +290,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
     setError(null);
     try {
       // Pass does not draw new tiles; the rack commitment stays the same.
-      await passTurn(walletClient, {
+      await passTurn(account, {
         gameId,
         nextRackCommitment: rackCommitment,
       });
@@ -304,11 +304,12 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   }
 
   async function handleResign() {
-    if (!walletClient) return;
+    const account = getAccount();
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     if (!confirm('Resign the game? This ends it.')) return;
     setBusy(true);
     try {
-      await resignGame(walletClient, { gameId });
+      await resignGame(account, { gameId });
       await refresh();
     } catch (e) {
       setError((e as Error).message);
@@ -318,7 +319,8 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   }
 
   async function handleExchange(tileIdsToExchange: string[]) {
-    if (!walletClient) return;
+    const account = getAccount();
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     setBusy(true);
     setError(null);
     setExchangeOpen(false);
@@ -342,7 +344,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
 
       // Step 2: record exchange on GenLayer
       setStatus('Submitting exchange to GenLayer...');
-      await recordExchange(walletClient, {
+      await recordExchange(account, {
         gameId,
         exchangeCommitment: prep.exchangeCommitment,
         nextRackCommitment: prep.newRackCommitment,
@@ -372,13 +374,15 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   }
 
   async function handleChallenge(reason: string) {
-    if (!walletClient || !game?.last_move) return;
+    const account = getAccount();
+    if (!game?.last_move) return;
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     setBusy(true);
     setError(null);
     setChallengeOpen(false);
     try {
       setStatus('Submitting challenge to GenLayer...');
-      await challengeMove(walletClient, {
+      await challengeMove(account, {
         gameId,
         moveNumber: game.last_move.moveNumber,
         reason,
@@ -394,13 +398,15 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   }
 
   async function handleResolveChallenge() {
-    if (!walletClient || !game?.pending_challenge) return;
+    const account = getAccount();
+    if (!game?.pending_challenge) return;
+    if (!account) { setError('Unlock your wallet (top-right menu) to play.'); return; }
     setBusy(true);
     setError(null);
     setChallengeOpen(false);
     try {
       setStatus('Resolving challenge via GenLayer LLM...');
-      await resolveChallenge(walletClient, {
+      await resolveChallenge(account, {
         gameId,
         challengeId: game.pending_challenge.challenge_id,
       });
@@ -472,14 +478,13 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
           <SetupPanel
             game={game}
             walletAddress={walletAddress}
-            isConnected={isConnected}
+            isUnlocked={isUnlocked}
             busy={busy}
             status={status}
             error={error}
             gameId={gameId}
             onDealAndStart={handleDealAndStart}
             onJoin={handleJoin}
-            onSignIn={signIn}
           />
         )}
 
@@ -628,14 +633,13 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
 function SetupPanel(props: {
   game: OnChainGame;
   walletAddress: string | null;
-  isConnected: boolean;
+  isUnlocked: boolean;
   busy: boolean;
   status: string | null;
   error: string | null;
   gameId: string;
   onDealAndStart: () => void;
   onJoin: () => void;
-  onSignIn: () => Promise<boolean>;
 }) {
   const isCreator =
     props.walletAddress && props.walletAddress === props.game.creator.toLowerCase();
@@ -676,11 +680,11 @@ function SetupPanel(props: {
       </ul>
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
-        {!props.isConnected && (
-          <p className="text-sm text-text-muted">Connect a wallet to participate.</p>
+        {!props.walletAddress && (
+          <p className="text-sm text-text-muted">Log in to participate.</p>
         )}
-        {props.isConnected && !props.walletAddress && (
-          <Button onClick={props.onSignIn}>Sign in with wallet</Button>
+        {props.walletAddress && !props.isUnlocked && (
+          <p className="text-sm text-accent-gold">Unlock your wallet (top-right menu) to play.</p>
         )}
         {isCreator && (
           <>

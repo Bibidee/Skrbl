@@ -44,3 +44,5 @@ Thumbs.db
 # Misc
 *.tsbuildinfo
 .eslintcache
+
+.vercel

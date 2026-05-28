@@ -15,7 +15,7 @@
  * we fall back to our own `studioNet` viem chain object for the read client.
  */
 import { assertConfigured, clientEnv } from '../env/client';
-import type { WalletClient } from 'viem';
+import type { PrivateKeyAccount } from 'viem';
 import { getBrowserGenLayerRpcUrl } from './rpc-url';
 
 // genlayer-js types vary across versions; we keep the surface area narrow.
@@ -67,17 +67,18 @@ export async function getReadClient(): Promise<GenLayerReadClient> {
   return cachedRead;
 }
 
-export async function getWriteClient(walletClient: WalletClient): Promise<GenLayerWriteClient> {
-  if (!walletClient.account?.address) {
+export async function getWriteClient(account: PrivateKeyAccount): Promise<GenLayerWriteClient> {
+  if (!account?.address) {
     throw new Error('GENLAYER_WALLET_ACCOUNT_MISSING');
   }
   const { createClient } = await import('genlayer-js');
   const { studioNet } = await import('./chain');
+  // Embedded wallet: pass the local viem account so genlayer-js signs in-process
+  // (no external provider / wallet extension).
   const client = createClient({
     chain: studioNet,
     endpoint: getBrowserGenLayerRpcUrl(),
-    account: walletClient.account.address,
-    provider: walletClient.transport,
+    account,
   } as unknown as Parameters<typeof createClient>[0]) as unknown as GenLayerWriteClient;
   return client;
 }

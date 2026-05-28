@@ -6,11 +6,13 @@ import { History } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { getRecentGames, type OnChainGame } from '@/lib/genlayer';
+import { useDisplayNames } from '@/hooks/useDisplayNames';
 
 export default function HistoryPage() {
   const [games, setGames] = useState<OnChainGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { label } = useDisplayNames(games.map((g) => g.winner));
 
   useEffect(() => {
     let cancelled = false;
@@ -38,7 +40,7 @@ export default function HistoryPage() {
           <History size={22} className="text-primary" /> Match history
         </h1>
         <p className="mt-1 text-sm text-text-muted">
-          Past WordCourt games ranked by length. Click any to inspect the official board.
+          Past Skrbl games ranked by length. Click any to inspect the official board.
         </p>
 
         <div className="mt-6 overflow-hidden rounded-xl border border-border bg-surface shadow-sm">
@@ -61,9 +63,7 @@ export default function HistoryPage() {
               <div className="text-sm tabular-nums">{g.move_count} moves</div>
               <div className="text-sm">
                 {g.winner ? (
-                  <span className="font-mono">
-                    Winner {g.winner.slice(0, 6)}…{g.winner.slice(-4)}
-                  </span>
+                  <span>Winner <span className="font-semibold">{label(g.winner)}</span></span>
                 ) : (
                   <span className="text-text-muted">In progress</span>
                 )}

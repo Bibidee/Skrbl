@@ -12,13 +12,11 @@
     "clean": "rimraf .next .turbo node_modules"
   },
   "dependencies": {
-    "@rainbow-me/rainbowkit": "^2.2.4",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.46.1",
     "@tanstack/react-query": "^5.66.0",
     "@wordcourt/shared": "*",
     "jose": "^5.9.6",
-    "siwe": "^3.0.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.4.1",
     "genlayer-js": "1.1.7",
@@ -30,7 +28,6 @@
     "server-only": "^0.0.1",
     "tailwind-merge": "^3.0.1",
     "viem": "^2.22.21",
-    "wagmi": "^2.14.11",
     "zod": "^3.24.1",
     "zustand": "^5.0.3"
   },

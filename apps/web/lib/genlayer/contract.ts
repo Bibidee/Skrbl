@@ -11,7 +11,7 @@
  * Writes return both the tx hash and the parsed JSON receipt the contract
  * emitted, so UI code can show "+ 18 points" without an extra round-trip.
  */
-import type { WalletClient } from 'viem';
+import type { PrivateKeyAccount } from 'viem';
 import { isValidModeTheme } from '@wordcourt/shared';
 import { getContractAddress, getReadClient, getWriteClient } from './client';
 import type {
@@ -62,11 +62,11 @@ async function viewCall<T>(functionName: string, args: readonly unknown[], fallb
 }
 
 async function writeCall(
-  walletClient: WalletClient,
+  account: PrivateKeyAccount,
   functionName: string,
   args: readonly unknown[],
 ): Promise<WriteResult> {
-  const client = await getWriteClient(walletClient);
+  const client = await getWriteClient(account);
   const address = getContractAddress();
 
   // writeContract signs + broadcasts via the wallet and returns the tx hash.
@@ -137,14 +137,14 @@ async function writeCall(
 // Write functions (15 - exactly the deployed contract surface)
 // ============================================================
 
-export function createGame(walletClient: WalletClient, args: CreateGameArgs): Promise<WriteResult> {
+export function createGame(account: PrivateKeyAccount, args: CreateGameArgs): Promise<WriteResult> {
   if (!isValidModeTheme(args.wordMode, args.theme)) {
     throw new Error(
       `INVALID_MODE_THEME: word_mode=${args.wordMode} theme=${args.theme}. ` +
         `themed requires crypto/genlayer; classic/custom require theme=none.`,
     );
   }
-  return writeCall(walletClient, 'create_game', [
+  return writeCall(account, 'create_game', [
     args.gameId,
     args.wordMode,
     args.theme,
@@ -153,23 +153,23 @@ export function createGame(walletClient: WalletClient, args: CreateGameArgs): Pr
   ]);
 }
 
-export function joinGame(walletClient: WalletClient, args: JoinGameArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'join_game', [args.gameId, args.rackCommitment]);
+export function joinGame(account: PrivateKeyAccount, args: JoinGameArgs): Promise<WriteResult> {
+  return writeCall(account, 'join_game', [args.gameId, args.rackCommitment]);
 }
 
-export function commitTileBag(walletClient: WalletClient, args: CommitTileBagArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'commit_tile_bag', [args.gameId, args.bagCommitment]);
+export function commitTileBag(account: PrivateKeyAccount, args: CommitTileBagArgs): Promise<WriteResult> {
+  return writeCall(account, 'commit_tile_bag', [args.gameId, args.bagCommitment]);
 }
 
-export function commitRack(walletClient: WalletClient, args: CommitRackArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'commit_rack', [args.gameId, args.rackCommitment]);
+export function commitRack(account: PrivateKeyAccount, args: CommitRackArgs): Promise<WriteResult> {
+  return writeCall(account, 'commit_rack', [args.gameId, args.rackCommitment]);
 }
 
-export function startGame(walletClient: WalletClient, args: StartGameArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'start_game', [args.gameId]);
+export function startGame(account: PrivateKeyAccount, args: StartGameArgs): Promise<WriteResult> {
+  return writeCall(account, 'start_game', [args.gameId]);
 }
 
-export function submitMove(walletClient: WalletClient, args: SubmitMoveArgs): Promise<WriteResult> {
+export function submitMove(account: PrivateKeyAccount, args: SubmitMoveArgs): Promise<WriteResult> {
   // Contract takes JSON-string placements + claimed_words.
   const placementsPayload = args.placements.map((p) => ({
     row: p.row,
@@ -177,7 +177,7 @@ export function submitMove(walletClient: WalletClient, args: SubmitMoveArgs): Pr
     letter: p.letter.toUpperCase(),
     blank: p.isBlank,
   }));
-  return writeCall(walletClient, 'submit_move', [
+  return writeCall(account, 'submit_move', [
     args.gameId,
     JSON.stringify(placementsPayload),
     JSON.stringify(args.claimedWords.map((w) => w.toUpperCase())),
@@ -187,10 +187,10 @@ export function submitMove(walletClient: WalletClient, args: SubmitMoveArgs): Pr
 }
 
 export function challengeMove(
-  walletClient: WalletClient,
+  account: PrivateKeyAccount,
   args: ChallengeMoveArgs,
 ): Promise<WriteResult> {
-  return writeCall(walletClient, 'challenge_move', [
+  return writeCall(account, 'challenge_move', [
     args.gameId,
     BigInt(args.moveNumber),
     args.reason,
@@ -198,45 +198,45 @@ export function challengeMove(
 }
 
 export function resolveChallenge(
-  walletClient: WalletClient,
+  account: PrivateKeyAccount,
   args: ResolveChallengeArgs,
 ): Promise<WriteResult> {
-  return writeCall(walletClient, 'resolve_challenge', [args.gameId, args.challengeId]);
+  return writeCall(account, 'resolve_challenge', [args.gameId, args.challengeId]);
 }
 
-export function passTurn(walletClient: WalletClient, args: PassTurnArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'pass_turn', [args.gameId, args.nextRackCommitment]);
+export function passTurn(account: PrivateKeyAccount, args: PassTurnArgs): Promise<WriteResult> {
+  return writeCall(account, 'pass_turn', [args.gameId, args.nextRackCommitment]);
 }
 
 export function recordExchange(
-  walletClient: WalletClient,
+  account: PrivateKeyAccount,
   args: RecordExchangeArgs,
 ): Promise<WriteResult> {
-  return writeCall(walletClient, 'record_exchange', [
+  return writeCall(account, 'record_exchange', [
     args.gameId,
     args.exchangeCommitment,
     args.nextRackCommitment,
   ]);
 }
 
-export function resignGame(walletClient: WalletClient, args: ResignGameArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'resign_game', [args.gameId]);
+export function resignGame(account: PrivateKeyAccount, args: ResignGameArgs): Promise<WriteResult> {
+  return writeCall(account, 'resign_game', [args.gameId]);
 }
 
 export function forfeitGame(
-  walletClient: WalletClient,
+  account: PrivateKeyAccount,
   args: ResignGameArgs,
 ): Promise<WriteResult> {
   // Alias on the contract; surface both for clarity at call sites.
-  return writeCall(walletClient, 'forfeit_game', [args.gameId]);
+  return writeCall(account, 'forfeit_game', [args.gameId]);
 }
 
-export function endGame(walletClient: WalletClient, args: EndGameArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'end_game', [args.gameId, args.finalRacksCommitment]);
+export function endGame(account: PrivateKeyAccount, args: EndGameArgs): Promise<WriteResult> {
+  return writeCall(account, 'end_game', [args.gameId, args.finalRacksCommitment]);
 }
 
-export function cancelGame(walletClient: WalletClient, args: CancelGameArgs): Promise<WriteResult> {
-  return writeCall(walletClient, 'cancel_game', [args.gameId]);
+export function cancelGame(account: PrivateKeyAccount, args: CancelGameArgs): Promise<WriteResult> {
+  return writeCall(account, 'cancel_game', [args.gameId]);
 }
 
 // =============================================================

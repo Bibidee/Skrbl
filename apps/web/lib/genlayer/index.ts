@@ -3,12 +3,13 @@
  *
  * Typical usage from a client component:
  *
- *   import { useWalletClient } from 'wagmi';
+ *   import { useWallet } from '@/components/providers/EmbeddedWalletProvider';
  *   import { createGame } from '@/lib/genlayer';
  *
- *   const { data: walletClient } = useWalletClient();
- *   if (!walletClient) return;
- *   const { txHash, result } = await createGame(walletClient, {
+ *   const { getAccount } = useWallet();
+ *   const account = getAccount();
+ *   if (!account) return; // wallet locked — prompt unlock
+ *   const { txHash, result } = await createGame(account, {
  *     gameId, wordMode: 'classic', theme: 'none', maxPlayers: 2, rackCommitment,
  *   });
  */

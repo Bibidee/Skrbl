@@ -1,12 +1,8 @@
 'use client';
 
-import { RainbowKitProvider, lightTheme } from '@rainbow-me/rainbowkit';
-import '@rainbow-me/rainbowkit/styles.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { type ReactNode, useState } from 'react';
-import { WagmiProvider } from 'wagmi';
-import { wagmiConfig } from '@/lib/wagmi';
-import { PALETTE } from '@wordcourt/shared';
+import { EmbeddedWalletProvider } from '@/components/providers/EmbeddedWalletProvider';
 
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
@@ -24,21 +20,8 @@ export function Providers({ children }: { children: ReactNode }) {
   );
 
   return (
-    <WagmiProvider config={wagmiConfig}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          theme={lightTheme({
-            accentColor: PALETTE.primary,
-            accentColorForeground: '#FFFFFF',
-            borderRadius: 'medium',
-            fontStack: 'system',
-          })}
-          modalSize="compact"
-          appInfo={{ appName: 'Skrbl' }}
-        >
-          {children}
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </WagmiProvider>
+    <QueryClientProvider client={queryClient}>
+      <EmbeddedWalletProvider>{children}</EmbeddedWalletProvider>
+    </QueryClientProvider>
   );
 }

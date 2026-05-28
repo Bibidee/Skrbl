@@ -3,6 +3,7 @@
 import { Trophy } from 'lucide-react';
 import { PLAYER_COLORS } from '@wordcourt/shared';
 import { cn } from '@/lib/utils/cn';
+import { useDisplayNames } from '@/hooks/useDisplayNames';
 
 type PanelPlayer = {
   walletAddress: string;
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export function ScorePanel({ players, currentTurnWallet, winnerWallet }: Props) {
+  const { label, short } = useDisplayNames(players.map((p) => p.walletAddress));
   return (
     <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
       <h3 className="text-sm font-semibold text-text-muted">Scores</h3>
@@ -43,8 +45,9 @@ export function ScorePanel({ players, currentTurnWallet, winnerWallet }: Props) 
                     style={{ backgroundColor: color }}
                     aria-hidden
                   />
-                  <span className="font-mono text-xs text-text-dark">
-                    {p.walletAddress.slice(0, 6)}…{p.walletAddress.slice(-4)}
+                  <span className="flex flex-col leading-tight">
+                    <span className="text-xs font-semibold text-text-dark">{label(p.walletAddress)}</span>
+                    <span className="font-mono text-[10px] text-text-muted">{short(p.walletAddress)}</span>
                   </span>
                   {isWinner && <Trophy size={14} className="text-accent-gold" />}
                 </div>

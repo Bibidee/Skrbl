@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAccount, useWalletClient } from 'wagmi';
 import { Sparkles } from 'lucide-react';
 import {
   isValidModeTheme,
@@ -14,7 +13,7 @@ import {
 import { createGame } from '@/lib/genlayer';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Input';
-import { useWalletAuth } from '@/hooks/useWalletAuth';
+import { useWallet } from '@/components/providers/EmbeddedWalletProvider';
 import { clientLogger } from '@/lib/logger/client';
 
 const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -34,9 +33,7 @@ function placeholderRackCommitment(wallet: string, gameId: string) {
 
 export function CreateGameDialog() {
   const router = useRouter();
-  const { isConnected } = useAccount();
-  const { data: walletClient } = useWalletClient();
-  const { walletAddress, signIn } = useWalletAuth();
+  const { walletAddress, isUnlocked, getAccount } = useWallet();
   const [wordMode, setWordMode] = useState<WordMode>('classic');
   const [theme, setTheme] = useState<Theme>('none');
   const [maxPlayers, setMaxPlayers] = useState<2 | 3 | 4>(2);
@@ -51,38 +48,29 @@ export function CreateGameDialog() {
 
   async function handleCreate() {
     setError(null);
-    if (!isConnected || !walletClient) {
-      setError('Connect a wallet first.');
+    if (!walletAddress) {
+      setError('Please log in to create a game.');
       return;
     }
-    if (!walletAddress) {
-      setStatus('Signing in with your wallet...');
-      const ok = await signIn();
-      if (!ok) {
-        setError('Wallet sign-in failed.');
-        setStatus(null);
-        return;
-      }
+    const account = getAccount();
+    if (!isUnlocked || !account) {
+      setError('Unlock your wallet (top-right menu) to create a game.');
+      return;
     }
     if (!isValidModeTheme(wordMode, theme)) {
       setError('Invalid (mode, theme) combination.');
       return;
     }
 
-    if (!walletClient.account?.address) {
-      setError('Wallet account is still loading. Try again in a moment.');
-      return;
-    }
-
     const gameId = `wc_${randomRoomCode().toLowerCase()}${Math.floor(Math.random() * 1000)}`;
     const roomCode = randomRoomCode();
-    const wallet = walletClient.account.address.toLowerCase();
+    const wallet = walletAddress.toLowerCase();
     const rackCommitment = placeholderRackCommitment(wallet, gameId);
 
     setBusy(true);
     try {
       setStatus('Submitting create_game to GenLayer...');
-      await createGame(walletClient, {
+      await createGame(account, {
         gameId,
         wordMode,
         theme,
@@ -168,10 +156,10 @@ export function CreateGameDialog() {
 
       <div className="mt-5 flex items-center justify-between gap-3">
         <div className="text-xs text-text-muted">
-          {!walletAddress && isConnected && 'You’ll be asked to sign in with your wallet.'}
-          {!isConnected && 'Connect a wallet to create a game.'}
+          {!walletAddress && 'Log in to create a game.'}
+          {walletAddress && !isUnlocked && 'Unlock your wallet to create a game.'}
         </div>
-        <Button onClick={handleCreate} disabled={busy || !isConnected}>
+        <Button onClick={handleCreate} disabled={busy || !walletAddress}>
           {busy ? 'Working...' : 'Create game'}
         </Button>
       </div>

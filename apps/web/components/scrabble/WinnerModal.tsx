@@ -4,6 +4,7 @@ import { Trophy, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { PLAYER_COLORS } from '@wordcourt/shared';
 import { cn } from '@/lib/utils/cn';
+import { useDisplayNames } from '@/hooks/useDisplayNames';
 
 type PlayerResult = {
   walletAddress: string;
@@ -30,6 +31,7 @@ export function WinnerModal({
   onClose,
   onBackToLobby,
 }: Props) {
+  const { label } = useDisplayNames([...players.map((p) => p.walletAddress), winner]);
   if (!isOpen) return null;
 
   const sorted = [...players].sort((a, b) => b.score - a.score);
@@ -57,9 +59,7 @@ export function WinnerModal({
           {winner && (
             <p className="mt-1 text-sm text-text-muted">
               Winner:{' '}
-              <span className="font-mono font-semibold text-accent-gold text-xs">
-                {winner.slice(0, 8)}…{winner.slice(-6)}
-              </span>
+              <span className="font-semibold text-accent-gold">{label(winner)}</span>
             </p>
           )}
           {!winner && endReason && (
@@ -83,8 +83,8 @@ export function WinnerModal({
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-text-muted w-4 text-right">{rank + 1}.</span>
                   {isWinner && <Trophy size={13} className="text-accent-gold" />}
-                  <span className={cn('font-mono text-xs', color)}>
-                    {p.walletAddress.slice(0, 8)}…{p.walletAddress.slice(-4)}
+                  <span className={cn('text-xs font-semibold', color)}>
+                    {label(p.walletAddress)}
                   </span>
                 </div>
                 <span className="font-bold tabular-nums">{p.score}</span>
