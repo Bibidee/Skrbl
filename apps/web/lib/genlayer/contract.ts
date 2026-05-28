@@ -68,36 +68,59 @@ async function writeCall(
 ): Promise<WriteResult> {
   const client = await getWriteClient(walletClient);
   const address = getContractAddress();
-  const hash = await client.writeContract({ address, functionName, args });
-  const receipt = await client.waitForTransactionReceipt({ hash });
 
-  // GenLayer transaction status can surface in two forms:
-  //  1. viem-style string: 'success' | 'reverted'
-  //  2. GenLayer numeric enum: PENDING=0, CANCELED=1, PROPOSING=2, COMMITTING=3,
-  //     REVEALING=4, ACCEPTED=5, FINALIZED=6, UNDETERMINED=7,
-  //     LEADER_TIMEOUT=8, VALIDATORS_TIMEOUT=9
-  // ACCEPTED (5) and FINALIZED (6) are both successful outcomes. The contract
-  // can also expose `consensus_data` / `accepted` flags as a secondary signal.
-  const rawStatus = (receipt as Record<string, unknown>).status as unknown;
+  // writeContract signs + broadcasts via the wallet and returns the tx hash.
+  // Once we have a hash, the move is on its way to GenLayer consensus.
+  const hash = await client.writeContract({ address, functionName, args });
+
+  // Wait until the transaction reaches the ACCEPTED decided state. We pass the
+  // target status explicitly so we don't block through extra consensus stages.
+  //
+  // genlayer-js@1.x has a decode bug (`decodeInputData` -> viem RLP) that can
+  // throw "RLP string ends with N superfluous bytes" while *reading back* an
+  // already-accepted transaction. That decode failure must NOT fail the user's
+  // action: the tx is broadcast and GenLayer is the source of truth. We catch
+  // it, return the hash with an empty result, and let the caller's refresh()
+  // (getGame) read the authoritative outcome.
+  let receipt: Record<string, unknown> | null = null;
+  try {
+    receipt = (await client.waitForTransactionReceipt({
+      hash,
+      status: 'ACCEPTED',
+    })) as Record<string, unknown>;
+  } catch (e) {
+    const msg = (e as Error).message ?? '';
+    const isDecodeBug = /RLP|superfluous bytes|decode/i.test(msg);
+    if (!isDecodeBug) {
+      // A genuine failure (revert, timeout, rejected signature) — surface it.
+      throw e;
+    }
+    // Known library decode bug after acceptance — proceed with just the hash.
+    return { txHash: hash, result: {} };
+  }
+
+  // GenLayer status can surface as a string enum ('ACCEPTED' | 'FINALIZED' |
+  // 'success') or as a numeric code (ACCEPTED=5, FINALIZED=6). Treat both
+  // decided-success forms as success; an `accepted` flag is a secondary signal.
+  const rawStatus =
+    (receipt.statusName as unknown) ?? (receipt.status as unknown);
   const isSuccess =
     rawStatus === 'success' ||
     rawStatus === 5 ||
     rawStatus === 6 ||
     rawStatus === 'ACCEPTED' ||
     rawStatus === 'FINALIZED' ||
-    (receipt as Record<string, unknown>).accepted === true;
+    receipt.accepted === true;
 
   if (!isSuccess) {
     throw new Error(`GENLAYER_TX_FAILED: ${functionName} status=${String(rawStatus)}`);
   }
-  // The contract returns a JSON-stringified receipt in receipt.data (genlayer-js
-  // surfaces it under varying property names by version). Fall back to {}.
+
+  // The contract returns a JSON-stringified result; genlayer-js surfaces it
+  // under varying property names by version. Fall back to {}.
   let parsed: Record<string, unknown> = {};
   const candidate =
-    (receipt as Record<string, unknown>).result ??
-    (receipt as Record<string, unknown>).output ??
-    (receipt as Record<string, unknown>).returnValue ??
-    null;
+    receipt.result ?? receipt.output ?? receipt.returnValue ?? null;
   if (typeof candidate === 'string') {
     try {
       parsed = JSON.parse(candidate);

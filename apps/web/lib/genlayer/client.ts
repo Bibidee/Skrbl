@@ -34,7 +34,12 @@ type GenLayerWriteClient = GenLayerReadClient & {
     args?: readonly unknown[];
     value?: bigint;
   }) => Promise<`0x${string}`>;
-  waitForTransactionReceipt: (args: { hash: `0x${string}` }) => Promise<{
+  waitForTransactionReceipt: (args: {
+    hash: `0x${string}`;
+    status?: string;
+    interval?: number;
+    retries?: number;
+  }) => Promise<{
     status: 'success' | 'reverted' | string;
     transactionHash: `0x${string}`;
     [k: string]: unknown;
