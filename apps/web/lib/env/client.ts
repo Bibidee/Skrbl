@@ -43,7 +43,7 @@ const optionalString = z
   .or(z.literal('').transform(() => undefined));
 
 const ClientEnvSchema = z.object({
-  NEXT_PUBLIC_APP_NAME: z.string().default('WordCourt'),
+  NEXT_PUBLIC_APP_NAME: z.string().default('Skrbl'),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
 
   // Browser code must use the same-origin proxy to avoid upstream RPC CORS.

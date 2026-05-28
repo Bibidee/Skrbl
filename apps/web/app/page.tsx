@@ -39,7 +39,7 @@ function Hero() {
               </span>
             </h1>
             <p className="mt-5 max-w-xl text-lg text-text-muted">
-              WordCourt is a multiplayer word game where{' '}
+              Skrbl is a multiplayer word game where{' '}
               <strong className="text-text-dark">Supabase</strong> powers rooms, realtime
               play, private racks, and chat &mdash; while{' '}
               <strong className="text-text-dark">GenLayer</strong> acts as the trusted referee

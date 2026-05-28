@@ -16,10 +16,10 @@ export function Header() {
             aria-hidden
             className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-dark text-base font-black text-white shadow-sm transition-transform group-hover:scale-105"
           >
-            W
+            S
           </span>
           <span className="text-lg font-bold tracking-tight text-text-dark">
-            Word<span className="text-primary">Court</span>
+            Skr<span className="text-primary">bl</span>
           </span>
         </Link>
 

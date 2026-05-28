@@ -6,10 +6,10 @@ export function Footer() {
       <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 text-sm text-text-muted">
           <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary text-xs font-black text-white">
-            W
+            S
           </span>
           <span>
-            WordCourt &mdash; refereed by{' '}
+            Skrbl &mdash; refereed by{' '}
             <Link
               href="https://genlayer.com"
               target="_blank"

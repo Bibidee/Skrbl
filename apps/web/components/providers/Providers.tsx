@@ -34,7 +34,7 @@ export function Providers({ children }: { children: ReactNode }) {
             fontStack: 'system',
           })}
           modalSize="compact"
-          appInfo={{ appName: 'WordCourt' }}
+          appInfo={{ appName: 'Skrbl' }}
         >
           {children}
         </RainbowKitProvider>

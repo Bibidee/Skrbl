@@ -1,12 +1,12 @@
-# WordCourt
+# Skrbl
 
 > Every word has to stand in court.
 
-WordCourt is a multiplayer Scrabble-style word game. **Supabase** powers rooms, realtime
+Skrbl is a multiplayer Scrabble-style word game. **Supabase** powers rooms, realtime
 play, private racks, chat, and profiles. **GenLayer** acts as the trusted referee for board
 state, word validation, scoring, challenges, disputes, and final match settlement.
 
-WordCourt uses Supabase for realtime coordination, rooms, profiles, chat, private racks,
+Skrbl uses Supabase for realtime coordination, rooms, profiles, chat, private racks,
 tile services, and cached UI state. GenLayer remains the **authoritative referee** for public
 board state, word validation, scoring, challenges, disputes, and final settlement. Supabase
 never decides the official board, official score, or winner. **If Supabase and GenLayer

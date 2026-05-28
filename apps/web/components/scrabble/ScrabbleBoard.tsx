@@ -15,10 +15,13 @@ export function ScrabbleBoard({ board, preview, onSquareClick }: Props) {
   const rows = Array.from({ length: BOARD_SIZE });
   const cols = Array.from({ length: BOARD_SIZE });
   return (
-    <div className="mx-auto inline-block rounded-xl border-4 border-board-border bg-board-base p-2 shadow-lg">
+    <div
+      className="mx-auto rounded-xl border-4 border-board-border bg-board-base p-2 shadow-lg"
+      style={{ width: 'min(75vmin, 600px)' }}
+    >
       <div
-        className="grid gap-[2px]"
-        style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, minmax(0, 1fr))`, width: 'min(75vmin, 600px)' }}
+        className="grid w-full gap-[2px]"
+        style={{ gridTemplateColumns: `repeat(${BOARD_SIZE}, minmax(0, 1fr))` }}
       >
         {rows.map((_, row) =>
           cols.map((__, col) => {

@@ -17,10 +17,14 @@ const PostBody = z.object({
 
 async function resolveGameId(rawId: string): Promise<{ id: string; roomId: string | null } | null> {
   const supabase = getAdminSupabase();
+  // `id` is a UUID column; querying it with a genlayer id like "wc_xxx" throws a
+  // Postgres uuid-parse error and fails the whole .or() query. Pick the right
+  // column up front based on the genlayer "wc_" prefix.
+  const isGenlayerId = rawId.startsWith('wc_');
   const { data } = await supabase
     .from('games')
     .select('id, room_id')
-    .or(`id.eq.${rawId},genlayer_game_id.eq.${rawId}`)
+    .eq(isGenlayerId ? 'genlayer_game_id' : 'id', rawId)
     .maybeSingle();
   return data ? { id: data.id as string, roomId: data.room_id as string | null } : null;
 }

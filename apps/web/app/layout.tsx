@@ -4,20 +4,20 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'WordCourt — GenLayer-refereed Scrabble',
-    template: '%s · WordCourt',
+    default: 'Skrbl — GenLayer-refereed Scrabble',
+    template: '%s · Skrbl',
   },
   description:
-    'WordCourt is a multiplayer Scrabble-style word game refereed by GenLayer. Every word has to stand in court.',
-  applicationName: 'WordCourt',
+    'Skrbl is a multiplayer Scrabble-style word game refereed by GenLayer. Every word has to stand in court.',
+  applicationName: 'Skrbl',
   keywords: ['Scrabble', 'GenLayer', 'word game', 'multiplayer', 'web3', 'Supabase'],
-  authors: [{ name: 'WordCourt' }],
+  authors: [{ name: 'Skrbl' }],
   openGraph: {
-    title: 'WordCourt',
+    title: 'Skrbl',
     description: 'GenLayer-refereed Scrabble. Every word has to stand in court.',
     type: 'website',
   },
-  twitter: { card: 'summary_large_image', title: 'WordCourt' },
+  twitter: { card: 'summary_large_image', title: 'Skrbl' },
 };
 
 export const viewport: Viewport = {
