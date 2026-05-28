@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, KeyRound, LogOut, Lock, Pencil } from 'lucide-react';
@@ -86,11 +87,15 @@ export function AccountMenu() {
 }
 
 function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 z-[60] overflow-y-auto bg-black/40"
-      onClick={onClose}
-    >
+  // Render to document.body via a portal so the fixed overlay is positioned
+  // against the viewport, not the header (whose backdrop-blur would otherwise
+  // become the containing block and trap the modal at the top).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[60] overflow-y-auto bg-black/40" onClick={onClose}>
       <div className="flex min-h-full items-center justify-center p-4">
         <div
           className="max-h-[90vh] w-full max-w-sm overflow-y-auto rounded-2xl border border-border bg-surface p-5 shadow-xl"
@@ -99,7 +104,8 @@ function Backdrop({ children, onClose }: { children: React.ReactNode; onClose: (
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
