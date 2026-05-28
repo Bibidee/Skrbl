@@ -25,7 +25,6 @@ import {
   type OnChainGame,
 } from '@/lib/genlayer';
 import { Header } from '@/components/layout/Header';
-import { Footer } from '@/components/layout/Footer';
 import { Button } from '@/components/ui/Button';
 import { ScrabbleBoard } from '@/components/scrabble/ScrabbleBoard';
 import { TileRack } from '@/components/scrabble/TileRack';
@@ -420,7 +419,6 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
       <>
         <Header />
         <main className="mx-auto max-w-7xl px-4 py-10">Loading game…</main>
-        <Footer />
       </>
     );
   }
@@ -437,7 +435,6 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
             Back to lobby
           </Button>
         </main>
-        <Footer />
       </>
     );
   }
@@ -452,8 +449,8 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <main className="mx-auto flex h-[calc(100vh-4rem)] max-w-7xl flex-col overflow-hidden px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="font-mono text-sm text-text-muted">{game.game_id}</h1>
             <p className="text-xl font-bold text-text-dark">
@@ -487,8 +484,8 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
         )}
 
         {game.status !== 'waiting' && (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="space-y-4">
+          <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div className="min-h-0 space-y-4 overflow-y-auto">
               <ScrabbleBoard
                 board={game.board}
                 preview={placements}
@@ -561,7 +558,7 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
               )}
             </div>
 
-            <aside className="space-y-4">
+            <aside className="min-h-0 space-y-4 overflow-y-auto">
               <ScorePanel
                 players={playersWithScore}
                 currentTurnWallet={currentTurnWallet}
@@ -596,7 +593,6 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
           </div>
         )}
       </main>
-      <Footer />
       <WinnerModal
         isOpen={game?.status === 'completed' && !winnerDismissed}
         winner={game?.winner ?? null}
