@@ -30,6 +30,113 @@ export type PlacementValidation =
   | { valid: true }
   | { valid: false; error: PlacementError };
 
+// ---------------------------------------------------------------------------
+// Deterministic official scorer — an exact port of the GenLayer contract's
+// `_formed_words` + `_score_move` (contracts/genlayer/wordcourt.py). Used to
+// pass `claimed_score` on submit_move, which the contract requires to match its
+// own computation exactly. Keeping this byte-for-byte in sync with the contract
+// lets us skip the slow/nondeterministic on-chain `preview_move` view.
+// ---------------------------------------------------------------------------
+
+const BINGO_BONUS = 50;
+
+/**
+ * Computes the official score for a set of placements against the committed
+ * board, matching the contract's algorithm exactly (premiums on newly-placed
+ * tiles only, all formed words, +50 bingo for using all 7 tiles).
+ */
+export function computeOfficialScore(board: BoardState, placements: Placement[]): number {
+  if (placements.length === 0) return 0;
+
+  // board_after = committed board overlaid with the new placements.
+  const after = new Map<string, { letter: string; isBlank: boolean }>();
+  const boardBefore = new Set<string>();
+  for (const k of Object.keys(board)) {
+    const t = board[k]!;
+    after.set(k, { letter: t.letter, isBlank: t.isBlank });
+    boardBefore.add(k);
+  }
+  const placed = new Set<string>();
+  for (const p of placements) {
+    const k = `${p.row},${p.col}`;
+    after.set(k, { letter: p.letter, isBlank: p.isBlank });
+    placed.add(k);
+  }
+
+  // Orientation: horizontal iff every placement shares the same row (matches
+  // the contract's `_check_line`, which treats a single tile as horizontal).
+  const horizontal = new Set(placements.map((p) => p.row)).size === 1;
+
+  const inside = (r: number, c: number) => r >= 0 && r < BOARD_SIZE && c >= 0 && c < BOARD_SIZE;
+  const occupied = (r: number, c: number) => after.has(`${r},${c}`);
+
+  function walk(sr: number, sc: number, dr: number, dc: number): Array<[number, number]> {
+    let r = sr;
+    let c = sc;
+    while (inside(r - dr, c - dc) && occupied(r - dr, c - dc)) {
+      r -= dr;
+      c -= dc;
+    }
+    const cells: Array<[number, number]> = [];
+    while (inside(r, c) && occupied(r, c)) {
+      cells.push([r, c]);
+      r += dr;
+      c += dc;
+    }
+    return cells;
+  }
+
+  const words: Array<Array<[number, number]>> = [];
+  const seen = new Set<string>();
+  const addWord = (cells: Array<[number, number]>) => {
+    if (cells.length < 2) return;
+    const key = cells.map(([r, c]) => `${r},${c}`).join('|');
+    if (seen.has(key)) return;
+    seen.add(key);
+    words.push(cells);
+  };
+
+  // Main word along the placement axis.
+  if (horizontal) {
+    const row = placements[0]!.row;
+    const startCol = Math.min(...placements.map((p) => p.col));
+    addWord(walk(row, startCol, 0, 1));
+  } else {
+    const col = placements[0]!.col;
+    const startRow = Math.min(...placements.map((p) => p.row));
+    addWord(walk(startRow, col, 1, 0));
+  }
+
+  // Cross words formed perpendicular to each placed tile.
+  for (const p of placements) {
+    addWord(horizontal ? walk(p.row, p.col, 1, 0) : walk(p.row, p.col, 0, 1));
+  }
+
+  let total = 0;
+  for (const cells of words) {
+    let wordTotal = 0;
+    let wordMultiplier = 1;
+    for (const [r, c] of cells) {
+      const k = `${r},${c}`;
+      const tile = after.get(k)!;
+      let letterScore = tile.isBlank ? 0 : (LETTER_POINTS[tile.letter.toUpperCase()] ?? 0);
+      // Premiums apply only to tiles placed this move.
+      if (placed.has(k) && !boardBefore.has(k)) {
+        const prem = getPremiumSquare(r, c);
+        if (prem === 'double_letter') letterScore *= 2;
+        else if (prem === 'triple_letter') letterScore *= 3;
+        else if (prem === 'double_word' || prem === 'centre') wordMultiplier *= 2;
+        else if (prem === 'triple_word') wordMultiplier *= 3;
+      }
+      wordTotal += letterScore;
+    }
+    total += wordTotal * wordMultiplier;
+  }
+
+  if (placements.length === RACK_SIZE) total += BINGO_BONUS;
+  return total;
+}
+
 /** Returns true if all placements are in the same row. */
 function allSameRow(ps: Placement[]): boolean {
   return ps.every((p) => p.row === ps[0]!.row);

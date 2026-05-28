@@ -217,10 +217,12 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
     setBusy(true);
     setError(null);
     try {
-      // Step 1: get official score and formed words from the contract preview
-      setStatus('Previewing move...');
-      const { previewMove } = await import('@/lib/genlayer');
-      const preview = await previewMove(gameId, arr);
+      // Step 1: compute the official score locally. This is an exact port of the
+      // contract's scorer (lib/board computeOfficialScore), so it matches the
+      // value submit_move requires — and avoids the slow/flaky on-chain
+      // preview_move view. The contract still validates the words itself.
+      const { computeOfficialScore } = await import('@/lib/board');
+      const officialScore = computeOfficialScore(game.board, arr);
 
       // Step 2: prepare draw — compute new rack commitment WITHOUT writing to DB.
       // We need this commitment before calling GenLayer so the contract can verify it.
@@ -245,11 +247,13 @@ export default function GamePage({ params }: { params: Promise<{ gameId: string 
 
       // Step 3: submit the move to GenLayer with the real next rack commitment
       setStatus('Submitting move to GenLayer (validating words + score)...');
+      // claimedWords is left empty so the contract skips the claim-match check
+      // and validates words itself; claimedScore must equal the contract's score.
       const result = await submitMove(account, {
         gameId,
         placements: arr,
-        claimedWords: preview.formed_words,
-        claimedScore: preview.official_score,
+        claimedWords: [],
+        claimedScore: officialScore,
         nextRackCommitment: drawPrep.newRackCommitment,
       });
       clientLogger.info('move accepted', { tx: result.txHash });
