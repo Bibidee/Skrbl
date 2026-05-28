@@ -9,13 +9,35 @@ type Props = {
   walletAddress: string | null;
 };
 
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 export function ChatPanel({ genlayerGameId, walletAddress }: Props) {
   const { messages, sending, sendMessage } = useChat(genlayerGameId);
   const [draft, setDraft] = useState('');
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  // Only auto-scroll the message list (never the page) and only when the user
+  // is already near the bottom of the list, so reading history isn't disrupted.
+  const shouldAutoScroll = useRef(true);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const el = listRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      shouldAutoScroll.current =
+        el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  useEffect(() => {
+    if (!shouldAutoScroll.current) return;
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
   async function handleSend() {
@@ -38,7 +60,7 @@ export function ChatPanel({ genlayerGameId, walletAddress }: Props) {
       </div>
 
       {/* Message list */}
-      <div className="flex-1 overflow-y-auto max-h-48 px-3 py-2 space-y-2">
+      <div ref={listRef} className="flex-1 overflow-y-auto max-h-48 px-3 py-2 space-y-2">
         {messages.length === 0 && (
           <p className="text-xs text-text-muted text-center py-4">No messages yet. Say hello!</p>
         )}
@@ -48,6 +70,9 @@ export function ChatPanel({ genlayerGameId, walletAddress }: Props) {
             <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
               <span className="text-[10px] text-text-muted font-mono mb-0.5">
                 {m.wallet_address.slice(0, 6)}…{m.wallet_address.slice(-4)}
+                {m.created_at && (
+                  <span className="ml-1.5 text-text-muted/70">{formatTime(m.created_at)}</span>
+                )}
               </span>
               <span className={`rounded-lg px-2.5 py-1.5 text-xs max-w-[85%] break-words ${
                 isMe
@@ -59,7 +84,6 @@ export function ChatPanel({ genlayerGameId, walletAddress }: Props) {
             </div>
           );
         })}
-        <div ref={bottomRef} />
       </div>
 
       {/* Input */}

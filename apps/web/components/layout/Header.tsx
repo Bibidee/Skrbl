@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ConnectButton } from '@/components/wallet/ConnectButton';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 const NAV = [
   { href: '/lobby', label: 'Lobby' },
@@ -12,12 +14,14 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur supports-[backdrop-filter]:bg-surface/70">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="group flex items-center gap-2">
-          <span
-            aria-hidden
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-primary-dark text-base font-black text-white shadow-sm transition-transform group-hover:scale-105"
-          >
-            S
-          </span>
+          <Image
+            src="/skrbl-logo.jpg"
+            alt="Skrbl"
+            width={36}
+            height={36}
+            priority
+            className="h-9 w-9 rounded-lg shadow-sm transition-transform group-hover:scale-105"
+          />
           <span className="text-lg font-bold tracking-tight text-text-dark">
             Skr<span className="text-primary">bl</span>
           </span>
@@ -36,6 +40,7 @@ export function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <ConnectButton />
         </div>
       </div>

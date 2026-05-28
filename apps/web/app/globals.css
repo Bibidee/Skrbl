@@ -49,9 +49,34 @@
   --font-display: 'Inter', var(--font-sans);
 }
 
+/* Enable class-based dark mode (`<html class="dark">`) for any dark: utilities. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Dark theme: override the same design tokens so every colour utility
+ * (background, text, border, surface) flips automatically without touching
+ * component markup. Board and tile colours stay warm/legible; only the app
+ * chrome goes dark.
+ */
+.dark {
+  --color-background: #0E0B16;
+  --color-surface: #171221;
+  --color-surface-soft: #1F1830;
+
+  --color-primary: #A78BFA;
+  --color-primary-dark: #7C3AED;
+
+  --color-text-dark: #F3F0FF;
+  --color-text-muted: #A1A1AA;
+  --color-border: #2C2540;
+}
+
 @layer base {
   html {
     color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
   }
   body {
     background-color: var(--color-background);
